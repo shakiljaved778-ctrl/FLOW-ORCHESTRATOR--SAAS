@@ -1,5 +1,6 @@
 import { getDashboardData } from "@/lib/dashboard/context";
 import { PageHeader, Table, StatusBadge, Money, EmptyState } from "@/components/dashboard/ui";
+import { RealtimeRefresher } from "@/components/dashboard/realtime-refresher";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export default async function TransactionsPage() {
       <PageHeader
         title="Transactions"
         subtitle="Every payment, its routing decision, and provider outcome."
+        action={<RealtimeRefresher table="payments" />}
       />
       {rows.length === 0 ? (
         <EmptyState message="No transactions to display yet." />

@@ -17,19 +17,23 @@ export function browserClient(clerkToken?: string) {
   });
 }
 
+export type RealtimeTable = "payments" | "journal_entries" | "settlements";
+
 /**
- * Subscribe to INSERT/UPDATE on a table, invoking `onChange` for each event.
- * Returns an unsubscribe function.
+ * Subscribe to INSERT/UPDATE/DELETE on a table, invoking `onChange` for each
+ * event. `onStatus` reports the channel lifecycle ('SUBSCRIBED', 'CHANNEL_ERROR',
+ * 'TIMED_OUT', 'CLOSED'). Returns an unsubscribe function.
  */
 export function subscribeTable(
   client: ReturnType<typeof browserClient>,
-  table: "payments" | "journal_entries",
+  table: RealtimeTable,
   onChange: (payload: unknown) => void,
+  onStatus?: (status: string) => void,
 ): () => void {
   const channel = client
     .channel(`realtime:${table}`)
     .on("postgres_changes", { event: "*", schema: "public", table }, onChange)
-    .subscribe();
+    .subscribe((status) => onStatus?.(status));
 
   return () => {
     void client.removeChannel(channel);

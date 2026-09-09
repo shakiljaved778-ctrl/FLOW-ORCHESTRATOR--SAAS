@@ -1,5 +1,6 @@
 import { getDashboardData } from "@/lib/dashboard/context";
 import { PageHeader, StatCard, Table, StatusBadge, Money, EmptyState } from "@/components/dashboard/ui";
+import { RealtimeRefresher } from "@/components/dashboard/realtime-refresher";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,11 @@ export default async function OverviewPage() {
 
   return (
     <div>
-      <PageHeader title="Overview" subtitle="Real-time payment orchestration health." />
+      <PageHeader
+        title="Overview"
+        subtitle="Real-time payment orchestration health."
+        action={<RealtimeRefresher table="payments" />}
+      />
 
       <div className="grid gap-4 sm:grid-cols-4">
         <StatCard label="Total payments" value={String(total)} />

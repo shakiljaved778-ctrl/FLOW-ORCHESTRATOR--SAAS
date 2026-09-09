@@ -1,5 +1,6 @@
 import { getDashboardData } from "@/lib/dashboard/context";
 import { PageHeader, Table, Money, EmptyState } from "@/components/dashboard/ui";
+import { RealtimeRefresher } from "@/components/dashboard/realtime-refresher";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,7 @@ export default async function LedgerPage() {
       <PageHeader
         title="Ledger"
         subtitle="Double-entry journal — every payment posts a balanced debit and credit."
+        action={<RealtimeRefresher table="journal_entries" />}
       />
       {(entries ?? []).length === 0 ? (
         <EmptyState message="No journal entries yet." />

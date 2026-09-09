@@ -117,9 +117,20 @@ tokenize client-side and pass the token as `metadata.source`.
 - **Integration tests:** the full orchestration flow (route → charge → failover
   → atomic ledger post → audit → idempotency) and webhook processing are covered
   end to end against an in-memory Supabase double and fake PSP adapters ✅
+- **Live dashboard:** Overview, Transactions and Ledger subscribe to Supabase
+  realtime and auto-refresh on new payments / ledger entries ✅
 - **Next:** finalize the Fawri+ partner integration against a production spec;
-  live PSP sandbox round-trips (needs sandbox credentials); wire the dashboard to
-  Supabase realtime subscriptions.
+  live PSP sandbox round-trips (needs sandbox credentials).
+
+## Realtime dashboard
+
+The Overview, Transactions and Ledger pages carry a small live indicator and
+subscribe to Postgres change events (payments / journal_entries) via
+`RealtimeRefresher`. On a change they trigger a server-side refresh, so the data
+is refetched through the org-scoped path — the socket is only a signal, never a
+data channel, so nothing sensitive flows over it. Realtime requires the tables to
+be in the `supabase_realtime` publication (migration 0008) and the Clerk⇄Supabase
+JWT configured; without it the pages still render and refresh on manual reload.
 
 ## Reconciliation
 
