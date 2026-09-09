@@ -1,0 +1,39 @@
+{
+  "name": "flow-orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Embedded Finance Workflow Orchestrator — multi-PSP payment routing + unified double-entry ledger for vertical SaaS in Qatar/GCC.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate": "supabase db push",
+    "db:reset": "supabase db reset"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.9.6",
+    "@supabase/supabase-js": "^2.47.10",
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "stripe": "^17.5.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.0.4",
+    "@types/react-dom": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
