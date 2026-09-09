@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDashboardData } from "./context";
 import { generateApiKey } from "@/lib/auth/api-key";
 import { recordAudit } from "@/lib/audit/audit.service";
-import { parseSettlementCsv } from "@/lib/ledger/settlement";
+import { parseSettlementReport, isSettlementFormat } from "@/lib/ledger/settlement-formats";
 import { ingestSettlements } from "@/lib/ledger/reconciliation";
 
 /**
@@ -83,8 +83,11 @@ export async function uploadSettlements(formData: FormData): Promise<SettlementU
     throw new Error("Settlement file exceeds the 5 MB limit.");
   }
 
+  const formatRaw = String(formData.get("format") ?? "canonical");
+  const format = isSettlementFormat(formatRaw) ? formatRaw : "canonical";
+
   const text = await file.text();
-  const { records, errors } = parseSettlementCsv(text);
+  const { records, errors } = parseSettlementReport(text, format);
   if (records.length === 0) {
     throw new Error(
       errors.length ? `No valid rows. ${errors.slice(0, 3).join(" ")}` : "No settlement rows found.",
@@ -100,6 +103,7 @@ export async function uploadSettlements(formData: FormData): Promise<SettlementU
     resourceType: "settlement_batch",
     resourceId: result.batchId,
     responsePayload: {
+      format,
       rows: records.length,
       matched: result.matched.length,
       discrepancies: result.discrepancies.length,

@@ -18,7 +18,7 @@ export interface ParseResult {
 }
 
 /** Split a single CSV line, honoring simple double-quote quoting. */
-function splitCsvLine(line: string): string[] {
+export function splitCsvLine(line: string): string[] {
   const out: string[] = [];
   let cur = "";
   let inQuotes = false;
@@ -46,25 +46,44 @@ function splitCsvLine(line: string): string[] {
   return out.map((c) => c.trim());
 }
 
-export function parseSettlementCsv(text: string): ParseResult {
-  const errors: string[] = [];
-  const records: SettlementRecord[] = [];
+/** A parsed CSV table: original + lower-cased headers and raw string rows. */
+export interface CsvTable {
+  header: string[];
+  headerLower: string[];
+  rows: string[][];
+}
 
+/** Parse CSV text into a header + rows table, or null if there are no lines. */
+export function parseCsvTable(text: string): CsvTable | null {
   const lines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
 
-  if (lines.length === 0) {
+  if (lines.length === 0) return null;
+
+  const header = splitCsvLine(lines[0]);
+  return {
+    header,
+    headerLower: header.map((h) => h.toLowerCase()),
+    rows: lines.slice(1).map(splitCsvLine),
+  };
+}
+
+export function parseSettlementCsv(text: string): ParseResult {
+  const errors: string[] = [];
+  const records: SettlementRecord[] = [];
+
+  const table = parseCsvTable(text);
+  if (!table) {
     return { records, errors: ["File is empty."] };
   }
 
-  const header = splitCsvLine(lines[0]).map((h) => h.toLowerCase());
   const idx = {
-    provider: header.indexOf("provider"),
-    providerRef: header.indexOf("provider_ref"),
-    amount: header.indexOf("amount"),
-    currency: header.indexOf("currency"),
+    provider: table.headerLower.indexOf("provider"),
+    providerRef: table.headerLower.indexOf("provider_ref"),
+    amount: table.headerLower.indexOf("amount"),
+    currency: table.headerLower.indexOf("currency"),
   };
   const missing = Object.entries(idx)
     .filter(([, v]) => v === -1)
@@ -73,13 +92,13 @@ export function parseSettlementCsv(text: string): ParseResult {
     return { records, errors: [`Missing required columns: ${missing.join(", ")}`] };
   }
 
-  for (let i = 1; i < lines.length; i++) {
-    const cols = splitCsvLine(lines[i]);
+  for (let i = 0; i < table.rows.length; i++) {
+    const cols = table.rows[i];
     const provider = (cols[idx.provider] ?? "").toLowerCase();
     const providerRef = cols[idx.providerRef] ?? "";
     const amountRaw = cols[idx.amount] ?? "";
     const currency = (cols[idx.currency] ?? "").toUpperCase();
-    const rowNum = i + 1;
+    const rowNum = i + 2; // +1 header, +1 for 1-based numbering
 
     if (!VALID_PROVIDERS.has(provider)) {
       errors.push(`Row ${rowNum}: invalid provider "${provider}".`);

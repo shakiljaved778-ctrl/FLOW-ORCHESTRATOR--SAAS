@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { uploadSettlements, type SettlementUploadSummary } from "@/lib/dashboard/actions";
+import { SETTLEMENT_FORMATS } from "@/lib/ledger/settlement-formats";
 
 /** Settlement-file upload with an inline reconciliation summary. */
 export function SettlementUpload() {
@@ -25,10 +26,22 @@ export function SettlementUpload() {
     <div className="card">
       <h3 className="font-semibold text-slate-900">Upload settlement file</h3>
       <p className="mt-1 text-sm text-slate-500">
-        CSV with columns <code className="rounded bg-slate-100 px-1">provider,provider_ref,amount,currency</code>{" "}
-        (amount in minor units). Rows are matched to succeeded payments.
+        Upload a provider report (Stripe, Checkout.com, Fawri+) or the canonical{" "}
+        <code className="rounded bg-slate-100 px-1">provider,provider_ref,amount,currency</code>{" "}
+        CSV. Rows are matched to succeeded payments.
       </p>
-      <form action={onSubmit} className="mt-3 flex items-center gap-3">
+      <form action={onSubmit} className="mt-3 flex flex-wrap items-center gap-3">
+        <select
+          name="format"
+          defaultValue="canonical"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700"
+        >
+          {SETTLEMENT_FORMATS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.label}
+            </option>
+          ))}
+        </select>
         <input
           type="file"
           name="file"

@@ -111,8 +111,10 @@ tokenize client-side and pass the token as `metadata.source`.
   and CSV + PDF audit-trail export ✅
 - **Ledger integrity:** transactional `post_journal_entry` RPC — header + legs
   posted atomically with the balance constraint forced inside the transaction ✅
+- **Reconciliation formats:** per-provider settlement-report adapters
+  (Stripe / Checkout.com / Fawri+ → canonical) ✅
 - **Next:** finalize the Fawri+ partner integration against a production spec;
-  live PSP sandbox integration tests; per-provider settlement-report format adapters.
+  live PSP sandbox integration tests.
 
 ## Reconciliation
 
@@ -123,6 +125,11 @@ provider,provider_ref,amount,currency
 stripe,pi_3AbC,15000,QAR
 checkout,pay_9x,5000,AED
 ```
+
+…or upload a **provider report verbatim** — Stripe balance/payout, Checkout.com
+statement, or Fawri+ transfers — by picking its format; a per-provider adapter
+maps the native columns (and major→minor amounts) into the canonical shape.
+Column matching is loose (`Payment ID` = `payment_id` = `paymentid`).
 
 Each row is matched to a succeeded payment by `(provider, provider_ref)`. Equal
 amount/currency → **matched**; a reference match with a different amount →
