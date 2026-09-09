@@ -1,5 +1,7 @@
 # FlowOrchestrator
 
+[![CI](https://github.com/shakiljaved778-ctrl/FLOW-ORCHESTRATOR--SAAS/actions/workflows/ci.yml/badge.svg)](https://github.com/shakiljaved778-ctrl/FLOW-ORCHESTRATOR--SAAS/actions/workflows/ci.yml)
+
 Embedded Finance Workflow Orchestrator for vertical SaaS platforms in Qatar / the GCC.
 
 This MVP focuses on **payment orchestration**: a unified payments API with
@@ -28,6 +30,9 @@ npm run dev
 ```
 
 Then open http://localhost:3000.
+
+For a full production rollout — migrations order, Clerk⇄Supabase JWT, webhooks,
+env vars, and a go-live smoke test — see **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
 
 ## Scripts
 
