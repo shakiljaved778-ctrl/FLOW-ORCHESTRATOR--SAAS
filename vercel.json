@@ -6,6 +6,15 @@
     "app/api/v1/payments/route.ts": {
       "maxDuration": 30
     },
+    "app/api/v1/payments/[id]/route.ts": {
+      "maxDuration": 15
+    },
+    "app/api/v1/audit/export/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/v1/audit/export/pdf/route.ts": {
+      "maxDuration": 60
+    },
     "app/api/webhooks/**/route.ts": {
       "maxDuration": 30
     }

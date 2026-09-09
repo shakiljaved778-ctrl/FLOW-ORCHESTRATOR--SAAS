@@ -1,6 +1,11 @@
 # FlowOrchestrator
 
 [![CI](https://github.com/shakiljaved778-ctrl/FLOW-ORCHESTRATOR--SAAS/actions/workflows/ci.yml/badge.svg)](https://github.com/shakiljaved778-ctrl/FLOW-ORCHESTRATOR--SAAS/actions/workflows/ci.yml)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fshakiljaved778-ctrl%2FFLOW-ORCHESTRATOR--SAAS&env=NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,CLERK_SECRET_KEY,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET&envDescription=Clerk%2C%20Supabase%20and%20Stripe%20keys%20%E2%80%94%20see%20.env.example&envLink=https%3A%2F%2Fgithub.com%2Fshakiljaved778-ctrl%2FFLOW-ORCHESTRATOR--SAAS%2Fblob%2Fmain%2F.env.example)
+
+> **Deploy:** click the button above (imports this repo into your Vercel account
+> and prompts for the env vars), or run `vercel --prod` after `vercel link`.
+> Apply the Supabase migrations first — see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 Embedded Finance Workflow Orchestrator for vertical SaaS platforms in Qatar / the GCC.
 

@@ -1,0 +1,8 @@
+# Files not needed by the Vercel build/runtime.
+tests
+.github
+docs
+supabase
+*.md
+!README.md
+.env.example
