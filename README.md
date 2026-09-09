@@ -83,8 +83,27 @@ curl -X POST https://<app>/api/v1/payments \
 
 `amount` is in minor units (QAR 150.00 → `15000`).
 
+## Payment providers
+
+| Provider | Region | Currencies | Status |
+| --- | --- | --- | --- |
+| Stripe | Global cards | USD, AED, QAR | ✅ live (sandbox) |
+| Checkout.com | MENA acquiring | AED, USD, QAR | ✅ implemented |
+| Fawri+ | Qatar instant transfers | QAR only | ✅ implemented (provisional partner contract) |
+
+Each adapter implements the shared `PaymentProvider` interface and is toggled by
+a `PSP_<NAME>_ENABLED` env flag; the router skips disabled providers and fails
+over across the enabled ones. Card data is never handled server-side — platforms
+tokenize client-side and pass the token as `metadata.source`.
+
+> **Fawri+ note:** Fawri+ (Qatar Central Bank instant-payment scheme) has no
+> public REST API and is reached through a licensed banking/PSP partner. The
+> adapter targets a provisional, configurable contract (`FAWRI_API_BASE`);
+> adjust the request shape and `mapFawriStatus` when the partner spec is final.
+
 ## Roadmap
 
-- **Weeks 1-2:** Stripe orchestration, ledger, dashboard, audit, Clerk multi-tenancy ✅ (this MVP)
-- **Weeks 3-4:** Checkout.com + Fawri+ adapters and webhooks, settlement-file
-  reconciliation upload, PDF audit export.
+- **Weeks 1-2:** Stripe orchestration, ledger, dashboard, audit, Clerk multi-tenancy ✅
+- **Weeks 3-4:** Checkout.com + Fawri+ adapters and webhook handlers ✅
+- **Next:** settlement-file reconciliation upload, PDF audit export, and finalizing
+  the Fawri+ partner integration against a production spec.

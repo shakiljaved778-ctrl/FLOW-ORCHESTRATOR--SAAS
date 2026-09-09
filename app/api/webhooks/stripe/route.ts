@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serviceClient } from "@/lib/db/client";
 import { getProvider } from "@/lib/providers";
-import { recordAudit } from "@/lib/audit/audit.service";
-import { sanitize } from "@/lib/audit/sanitize";
+import { processWebhook } from "@/lib/webhooks/process";
 
 export const runtime = "nodejs";
 
-/** Map Stripe event types → the orchestrator's normalized event vocabulary. */
-function normalizeType(stripeType: string): string | null {
+/** Map Stripe event types → the orchestrator's normalized vocabulary. */
+function normalizeType(stripeType: string): string {
   switch (stripeType) {
     case "payment_intent.succeeded":
       return "payment.succeeded";
@@ -16,14 +15,25 @@ function normalizeType(stripeType: string): string | null {
     case "charge.refunded":
       return "payment.refunded";
     default:
-      return null;
+      return stripeType;
   }
 }
 
 /**
+ * Extract the PaymentIntent id (our attempt's provider_ref) from the event.
+ * For payment_intent.* it is the object id; for charge.refunded it is the
+ * object's `payment_intent` field.
+ */
+function extractIntentId(type: string, object: Record<string, unknown>): string | undefined {
+  if (type === "charge.refunded") {
+    return object.payment_intent ? String(object.payment_intent) : undefined;
+  }
+  return object.id ? String(object.id) : undefined;
+}
+
+/**
  * POST /api/webhooks/stripe
- * Verifies the signature, deduplicates by event id, normalizes into
- * webhook_events, and reflects terminal states onto the payment.
+ * Verifies the signature, normalizes, dedupes, and reflects payment state.
  */
 export async function POST(req: NextRequest) {
   const db = serviceClient();
@@ -37,50 +47,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Signature verification failed: ${(e as Error).message}` }, { status: 400 });
   }
 
-  const externalId = String(event.id ?? "");
   const stripeType = String(event.type ?? "");
-  const normalized = normalizeType(stripeType);
+  const object = ((event.data as { object?: Record<string, unknown> } | undefined)?.object) ?? {};
 
-  // Idempotent insert; unique (provider, external_id) rejects redeliveries.
-  const { error: insertErr } = await db.from("webhook_events").insert({
-    provider: "stripe",
-    external_id: externalId,
-    event_type: normalized ?? stripeType,
-    raw_payload: sanitize(event),
-  });
-  if (insertErr && !insertErr.message.includes("duplicate")) {
-    return NextResponse.json({ error: "Failed to store event" }, { status: 500 });
+  try {
+    const result = await processWebhook(db, {
+      provider: "stripe",
+      externalId: String(event.id ?? ""),
+      eventType: normalizeType(stripeType),
+      providerRef: extractIntentId(stripeType, object),
+      raw: event,
+    });
+    return NextResponse.json(result);
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }
-  if (insertErr) {
-    // Already processed — acknowledge so Stripe stops retrying.
-    return NextResponse.json({ received: true, duplicate: true });
-  }
-
-  await recordAudit(db, {
-    action: "webhook.received",
-    resourceType: "webhook_event",
-    resourceId: externalId,
-    requestPayload: { type: stripeType },
-  });
-
-  // Reflect refunds onto the payment (success/failure are handled inline at
-  // charge time in this MVP's synchronous flow).
-  if (normalized === "payment.refunded") {
-    const data = (event.data as { object?: Record<string, unknown> } | undefined)?.object;
-    const intentId = data?.payment_intent ? String(data.payment_intent) : null;
-    if (intentId) {
-      const { data: attempt } = await db
-        .from("payment_attempts")
-        .select("payment_id")
-        .eq("provider", "stripe")
-        .eq("provider_ref", intentId)
-        .maybeSingle();
-      if (attempt?.payment_id) {
-        await db.from("payments").update({ status: "refunded" }).eq("id", attempt.payment_id);
-        await db.from("webhook_events").update({ payment_id: attempt.payment_id, processed_at: new Date().toISOString() }).eq("external_id", externalId).eq("provider", "stripe");
-      }
-    }
-  }
-
-  return NextResponse.json({ received: true });
 }
