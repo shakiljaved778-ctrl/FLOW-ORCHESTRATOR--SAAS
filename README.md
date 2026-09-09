@@ -63,9 +63,11 @@ tests/                   Ledger, routing, failover, idempotency invariants
 - **Money is always integer minor units** — never floats — so the ledger balances exactly.
 - **PSP adapter pattern** — Stripe is live; Checkout.com and Fawri+ implement the
   same `PaymentProvider` interface and drop in for weeks 3-4.
-- **The ledger is append-only and self-balancing** — a deferred DB constraint
-  trigger rejects any journal entry where debits ≠ credits, and updates/deletes
-  on posted entries are blocked at the database level.
+- **The ledger is append-only and self-balancing** — entries are posted through
+  the `post_journal_entry` Postgres function so the header and all legs commit in
+  one transaction; a deferred DB constraint (forced immediate inside the function)
+  rejects any entry where debits ≠ credits, and updates/deletes on posted entries
+  are blocked at the database level.
 - **Audit logs are immutable** (append-only, 7-year retention) and record UTC +
   Qatar-local timestamps, actor, org, action, and PCI-sanitized payloads.
 - **Tenancy** is enforced by RLS for dashboard reads (Clerk JWT → `org_id`) and
@@ -107,8 +109,10 @@ tokenize client-side and pass the token as `metadata.source`.
 - **Weeks 3-4:** Checkout.com + Fawri+ adapters and webhook handlers ✅
 - **Reconciliation & compliance:** settlement-file (CSV) upload with matching,
   and CSV + PDF audit-trail export ✅
+- **Ledger integrity:** transactional `post_journal_entry` RPC — header + legs
+  posted atomically with the balance constraint forced inside the transaction ✅
 - **Next:** finalize the Fawri+ partner integration against a production spec;
-  transactional `post_journal_entry` RPC; live PSP sandbox integration tests.
+  live PSP sandbox integration tests; per-provider settlement-report format adapters.
 
 ## Reconciliation
 

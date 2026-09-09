@@ -73,14 +73,14 @@ export function buildPaymentEntry(params: {
 }
 
 /**
- * Post a journal entry to the ledger. The header and its line items are written
- * with the service-role client; the deferred DB balance trigger provides a
- * second, authoritative guard. Provider responses are sanitized before storage.
+ * Post a journal entry to the ledger atomically via the `post_journal_entry`
+ * Postgres function (see migration 0007). The header and all legs are inserted
+ * in one transaction, and the deferred balance constraint is forced to check
+ * before the function returns — so a partial or unbalanced entry can never be
+ * persisted. Provider responses are sanitized before storage.
  *
- * Note: for true atomicity across the header + legs, deploy this as a Postgres
- * RPC (`post_journal_entry`) wrapping both inserts in one transaction. The
- * two-step insert here is the MVP path and is backstopped by the deferred
- * balance constraint, which rejects an unbalanced entry at commit.
+ * `assertBalanced` here is a fast client-side pre-check; the database function
+ * is the authoritative guard.
  */
 export async function postJournalEntry(
   db: SupabaseClient,
@@ -88,39 +88,27 @@ export async function postJournalEntry(
 ): Promise<{ entryId: string }> {
   assertBalanced(entry.lines);
 
-  const { data: header, error: headerErr } = await db
-    .from("journal_entries")
-    .insert({
-      org_id: entry.orgId,
-      description: entry.description,
-      transaction_id: entry.transactionId ?? null,
-      user_id: entry.userId ?? null,
-      provider: entry.provider ?? null,
-      provider_response: entry.providerResponse ? sanitize(entry.providerResponse) : null,
-    })
-    .select("id")
-    .single();
-
-  if (headerErr || !header) {
-    throw new Error(`Failed to create journal entry: ${headerErr?.message}`);
-  }
-
-  const { error: linesErr } = await db.from("line_items").insert(
-    entry.lines.map((l) => ({
-      entry_id: header.id,
+  const { data, error } = await db.rpc("post_journal_entry", {
+    p_org_id: entry.orgId,
+    p_description: entry.description,
+    p_lines: entry.lines.map((l) => ({
       account_id: l.accountId,
       debit: l.debit,
       credit: l.credit,
       currency: l.currency,
       memo: l.memo ?? null,
     })),
-  );
+    p_transaction_id: entry.transactionId ?? null,
+    p_user_id: entry.userId ?? null,
+    p_provider: entry.provider ?? null,
+    p_provider_response: entry.providerResponse ? sanitize(entry.providerResponse) : null,
+  });
 
-  if (linesErr) {
-    throw new Error(`Failed to post line items: ${linesErr.message}`);
+  if (error) {
+    throw new Error(`Failed to post journal entry: ${error.message}`);
   }
 
-  return { entryId: header.id as string };
+  return { entryId: data as string };
 }
 
 /** Look up an account id by (org, code, currency). */
