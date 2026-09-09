@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
+import { ClerkProvider, OrganizationSwitcher, UserButton } from "@clerk/nextjs";
 
 const NAV = [
   { href: "/dashboard", label: "Overview" },
@@ -13,6 +13,7 @@ const NAV = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
+    <ClerkProvider>
     <div className="flex min-h-screen">
       <aside className="w-60 shrink-0 border-r border-slate-200 bg-white p-4">
         <div className="px-2 text-lg font-bold text-slate-900">FlowOrchestrator</div>
@@ -37,5 +38,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
+    </ClerkProvider>
   );
 }

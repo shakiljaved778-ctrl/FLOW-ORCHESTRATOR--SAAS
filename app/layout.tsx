@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,12 +6,14 @@ export const metadata: Metadata = {
   description: "Embedded finance workflow orchestration for vertical SaaS in Qatar & the GCC.",
 };
 
+// ClerkProvider is intentionally NOT here. It is scoped to the routes that need
+// auth (dashboard, sign-in, sign-up) so the public landing page renders even if
+// Clerk keys are missing or misconfigured — a marketing page must never break
+// because of an auth-provider setting.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body>{children}</body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body>{children}</body>
+    </html>
   );
 }
