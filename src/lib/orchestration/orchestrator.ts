@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { PaymentRequest } from "./types";
+import type { PaymentRequest, PSP } from "./types";
+import type { PaymentProvider } from "@/lib/providers/provider.interface";
 import { route } from "./router";
 import { executeWithFailover } from "./retry";
 import { getProvider } from "@/lib/providers";
@@ -11,6 +12,10 @@ export interface OrchestrateContext {
   apiKeyId?: string;
   ipAddress?: string;
   userAgent?: string;
+  /** Override the PSP resolver (defaults to the real registry). For testing. */
+  resolveProvider?: (id: PSP) => PaymentProvider;
+  /** Override the available providers passed to routing (defaults to config). */
+  availableProviders?: PSP[];
 }
 
 export interface OrchestrateResult {
@@ -55,7 +60,11 @@ export async function orchestratePayment(
   }
 
   // 2. Route.
-  const decision = route({ currency: req.currency, amount: req.amount });
+  const decision = route({
+    currency: req.currency,
+    amount: req.amount,
+    available: ctx.availableProviders,
+  });
 
   // 3. Persist the payment row (status: routing).
   const { data: payment, error: payErr } = await db
@@ -101,7 +110,7 @@ export async function orchestratePayment(
       idempotencyKey: req.idempotencyKey,
       metadata: req.metadata,
     },
-    getProvider,
+    ctx.resolveProvider ?? getProvider,
   );
 
   // Persist every attempt for audit + reconciliation.

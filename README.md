@@ -55,7 +55,8 @@ src/lib/
   auth/                  Clerk + scoped API-key helpers
   db/                    Supabase clients (service + anon) and realtime
 supabase/migrations/     SQL schema, constraints, and RLS policies
-tests/                   Ledger, routing, failover, idempotency invariants
+tests/                   Unit invariants + end-to-end orchestrator/webhook
+                         integration tests (in-memory Supabase + fake PSPs)
 ```
 
 ### Design decisions
@@ -113,8 +114,12 @@ tokenize client-side and pass the token as `metadata.source`.
   posted atomically with the balance constraint forced inside the transaction ✅
 - **Reconciliation formats:** per-provider settlement-report adapters
   (Stripe / Checkout.com / Fawri+ → canonical) ✅
+- **Integration tests:** the full orchestration flow (route → charge → failover
+  → atomic ledger post → audit → idempotency) and webhook processing are covered
+  end to end against an in-memory Supabase double and fake PSP adapters ✅
 - **Next:** finalize the Fawri+ partner integration against a production spec;
-  live PSP sandbox integration tests.
+  live PSP sandbox round-trips (needs sandbox credentials); wire the dashboard to
+  Supabase realtime subscriptions.
 
 ## Reconciliation
 
