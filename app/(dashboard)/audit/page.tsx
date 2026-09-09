@@ -32,12 +32,20 @@ export default async function AuditPage() {
         title="Audit trail"
         subtitle="Immutable, 7-year-retained event log for QFC compliance."
         action={
-          <a
-            href="/api/v1/audit/export"
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-          >
-            Export CSV
-          </a>
+          <div className="flex gap-2">
+            <a
+              href="/api/v1/audit/export"
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            >
+              Export CSV
+            </a>
+            <a
+              href="/api/v1/audit/export/pdf"
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            >
+              Export PDF
+            </a>
+          </div>
         }
       />
       {rows.length === 0 ? (

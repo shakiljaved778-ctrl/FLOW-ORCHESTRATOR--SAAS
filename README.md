@@ -105,5 +105,28 @@ tokenize client-side and pass the token as `metadata.source`.
 
 - **Weeks 1-2:** Stripe orchestration, ledger, dashboard, audit, Clerk multi-tenancy ✅
 - **Weeks 3-4:** Checkout.com + Fawri+ adapters and webhook handlers ✅
-- **Next:** settlement-file reconciliation upload, PDF audit export, and finalizing
-  the Fawri+ partner integration against a production spec.
+- **Reconciliation & compliance:** settlement-file (CSV) upload with matching,
+  and CSV + PDF audit-trail export ✅
+- **Next:** finalize the Fawri+ partner integration against a production spec;
+  transactional `post_journal_entry` RPC; live PSP sandbox integration tests.
+
+## Reconciliation
+
+Admins upload a PSP settlement report as CSV on the Reconciliation page:
+
+```
+provider,provider_ref,amount,currency
+stripe,pi_3AbC,15000,QAR
+checkout,pay_9x,5000,AED
+```
+
+Each row is matched to a succeeded payment by `(provider, provider_ref)`. Equal
+amount/currency → **matched**; a reference match with a different amount →
+**discrepancy**; no payment → **unmatched settlement**. Results persist to the
+`settlements` table and the upload is audited.
+
+## Audit export
+
+The Audit page (admin-only) exports the immutable trail as **CSV** or a
+paginated **PDF** report (`/api/v1/audit/export` and `.../export/pdf`) carrying
+org identity, UTC + Qatar generation time, and the operator — for QFC filings.

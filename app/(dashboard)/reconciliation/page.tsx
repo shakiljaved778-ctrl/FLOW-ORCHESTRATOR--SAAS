@@ -1,64 +1,71 @@
 import { getDashboardData } from "@/lib/dashboard/context";
 import { PageHeader, StatCard, Table, Money, EmptyState } from "@/components/dashboard/ui";
+import { SettlementUpload } from "@/components/dashboard/settlement-upload";
 
 export const dynamic = "force-dynamic";
 
 /**
- * MVP reconciliation view: shows succeeded payments and their winning PSP
- * reference. A settlement-file upload matches these against PSP reports via
- * `reconcile()`; until a batch is uploaded we surface the candidates and flag
- * any succeeded payment missing a provider reference as needing attention.
+ * Reconciliation: upload a PSP settlement file to match it against succeeded
+ * payments. Uploaded settlement rows and their match status are shown below.
  */
 export default async function ReconciliationPage() {
-  const { db, orgId } = await getDashboardData();
+  const { db, orgId, isAdmin } = await getDashboardData();
 
-  const { data: attempts } = await db
-    .from("payment_attempts")
-    .select("payment_id, provider, provider_ref, status, payments!inner(org_id, amount, currency, status)")
-    .eq("status", "succeeded")
-    .eq("payments.org_id", orgId)
-    .eq("payments.status", "succeeded")
+  const { data: settlements } = await db
+    .from("settlements")
+    .select("id, provider, provider_ref, amount, currency, status, matched_payment_id, uploaded_at")
+    .eq("org_id", orgId)
+    .order("uploaded_at", { ascending: false })
     .limit(200);
 
-  const rows = (attempts ?? []) as unknown as Array<{
-    payment_id: string;
-    provider: string;
-    provider_ref: string | null;
-    payments: { amount: number; currency: string };
-  }>;
-
-  const missingRef = rows.filter((r) => !r.provider_ref);
+  const rows = settlements ?? [];
+  const counts = {
+    matched: rows.filter((r) => r.status === "matched").length,
+    discrepancy: rows.filter((r) => r.status === "discrepancy").length,
+    unmatched: rows.filter((r) => r.status === "unmatched").length,
+  };
 
   return (
     <div>
       <PageHeader
         title="Reconciliation"
-        subtitle="Match ledger entries to PSP settlement reports."
+        subtitle="Match PSP settlement reports to the unified ledger."
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Settled payments" value={String(rows.length)} />
-        <StatCard label="Missing provider ref" value={String(missingRef.length)} hint="need attention" />
-        <StatCard label="Unmatched settlements" value="—" hint="upload a settlement file" />
+        <StatCard label="Matched" value={String(counts.matched)} />
+        <StatCard label="Discrepancies" value={String(counts.discrepancy)} hint="amount/currency mismatch" />
+        <StatCard label="Unmatched settlements" value={String(counts.unmatched)} hint="no payment found" />
       </div>
 
-      {rows.length === 0 ? (
-        <EmptyState message="No settled payments to reconcile yet." />
+      {isAdmin ? (
+        <div className="mb-6">
+          <SettlementUpload />
+        </div>
       ) : (
-        <Table head={["Payment", "Provider", "Provider Ref", "Amount", "Reconcilable"]}>
+        <div className="mb-6">
+          <EmptyState message="Only organization admins can upload settlement files." />
+        </div>
+      )}
+
+      {rows.length === 0 ? (
+        <EmptyState message="No settlements uploaded yet." />
+      ) : (
+        <Table head={["Provider", "Provider Ref", "Amount", "Status", "Payment", "Uploaded"]}>
           {rows.map((r) => (
-            <tr key={r.payment_id}>
-              <td className="px-4 py-3 font-mono text-xs text-slate-500">{r.payment_id.slice(0, 8)}</td>
+            <tr key={r.id}>
               <td className="px-4 py-3">{r.provider}</td>
-              <td className="px-4 py-3 font-mono text-xs">{r.provider_ref ?? "—"}</td>
-              <td className="px-4 py-3"><Money minor={r.payments.amount} currency={r.payments.currency} /></td>
+              <td className="px-4 py-3 font-mono text-xs">{r.provider_ref}</td>
+              <td className="px-4 py-3"><Money minor={r.amount} currency={r.currency} /></td>
               <td className="px-4 py-3">
-                {r.provider_ref ? (
-                  <span className="badge badge-success">ready</span>
-                ) : (
-                  <span className="badge badge-failed">no ref</span>
-                )}
+                <span className={`badge ${r.status === "matched" ? "badge-success" : r.status === "discrepancy" ? "badge-pending" : "badge-failed"}`}>
+                  {r.status}
+                </span>
               </td>
+              <td className="px-4 py-3 font-mono text-xs text-slate-500">
+                {r.matched_payment_id ? String(r.matched_payment_id).slice(0, 8) : "—"}
+              </td>
+              <td className="px-4 py-3 text-slate-500">{new Date(r.uploaded_at).toLocaleDateString()}</td>
             </tr>
           ))}
         </Table>
