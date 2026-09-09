@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { serviceClient } from "@/lib/db/client";
-import { requireDashboardContext, resolveOrgId, isAdminRole } from "@/lib/auth/clerk";
+import { requireDashboardContext, isAdminRole } from "@/lib/auth/clerk";
+import { ensureOrgProvisioned } from "./provision";
 
 /**
  * Server-only helper for dashboard pages. Resolves the authenticated Clerk
@@ -18,6 +19,7 @@ export interface DashboardData {
 export async function getDashboardData(): Promise<DashboardData> {
   const ctx = await requireDashboardContext();
   const db = serviceClient();
-  const orgId = await resolveOrgId(db, ctx.clerkOrgId);
+  // Provision the org + chart of accounts on first access (idempotent).
+  const orgId = await ensureOrgProvisioned(db, ctx.clerkOrgId, ctx.orgName);
   return { db, orgId, userId: ctx.userId, isAdmin: isAdminRole(ctx.orgRole) };
 }
