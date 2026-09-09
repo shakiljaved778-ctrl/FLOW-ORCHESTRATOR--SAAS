@@ -2,13 +2,13 @@ import Link from "next/link";
 import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
 
 const NAV = [
-  { href: "/", label: "Overview" },
-  { href: "/transactions", label: "Transactions" },
-  { href: "/ledger", label: "Ledger" },
-  { href: "/reconciliation", label: "Reconciliation" },
-  { href: "/audit", label: "Audit" },
-  { href: "/settings/api-keys", label: "API Keys" },
-  { href: "/settings/branding", label: "Branding" },
+  { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/transactions", label: "Transactions" },
+  { href: "/dashboard/ledger", label: "Ledger" },
+  { href: "/dashboard/reconciliation", label: "Reconciliation" },
+  { href: "/dashboard/audit", label: "Audit" },
+  { href: "/dashboard/settings/api-keys", label: "API Keys" },
+  { href: "/dashboard/settings/branding", label: "Branding" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -31,7 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
-          <OrganizationSwitcher hidePersonal afterSelectOrganizationUrl="/" />
+          <OrganizationSwitcher hidePersonal afterSelectOrganizationUrl="/dashboard" />
           <UserButton />
         </header>
         <main className="flex-1 p-6">{children}</main>

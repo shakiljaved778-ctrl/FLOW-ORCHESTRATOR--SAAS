@@ -35,7 +35,7 @@ Always run typecheck + test + build before considering a change done (CI runs al
 - `src/lib/audit/` — `audit.service.ts`, `sanitize.ts` (PCI), `pdf.ts` (report).
 - `src/lib/db/` — `client.ts` (service + anon), `realtime.ts`.
 - `app/api/` — `v1/payments`, `v1/audit/export[/pdf]`, `webhooks/{stripe,checkout,fawri}`.
-- `app/(dashboard)/` — server components; `src/lib/dashboard/` has the org-scoped
+- `app/dashboard/` (served at `/dashboard`) — server components; `src/lib/dashboard/` has the org-scoped
   context helper and server actions.
 - `supabase/migrations/` — 0001…0008. `tests/` — unit + integration
   (`tests/helpers/fake-supabase.ts` is an in-memory Supabase double).

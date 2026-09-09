@@ -36,7 +36,7 @@ export async function createApiKey(formData: FormData): Promise<{ plaintext: str
     responsePayload: { name, prefix: key.keyPrefix },
   });
 
-  revalidatePath("/settings/api-keys");
+  revalidatePath("/dashboard/settings/api-keys");
   // Returned once; the plaintext is never stored or shown again.
   return { plaintext: key.plaintext };
 }
@@ -60,7 +60,7 @@ export async function revokeApiKey(formData: FormData): Promise<void> {
     resourceType: "api_key",
     resourceId: id,
   });
-  revalidatePath("/settings/api-keys");
+  revalidatePath("/dashboard/settings/api-keys");
 }
 
 export interface SettlementUploadSummary {
@@ -110,7 +110,7 @@ export async function uploadSettlements(formData: FormData): Promise<SettlementU
     },
   });
 
-  revalidatePath("/reconciliation");
+  revalidatePath("/dashboard/reconciliation");
   return {
     matched: result.matched.length,
     discrepancies: result.discrepancies.length,
@@ -140,5 +140,5 @@ export async function updateBranding(formData: FormData): Promise<void> {
     resourceId: orgId,
     requestPayload: patch,
   });
-  revalidatePath("/settings/branding");
+  revalidatePath("/dashboard/settings/branding");
 }

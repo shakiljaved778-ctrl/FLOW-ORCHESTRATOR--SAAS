@@ -56,7 +56,7 @@ env vars, and a go-live smoke test — see **[docs/DEPLOYMENT.md](docs/DEPLOYMEN
 app/                     Next.js routes (dashboard + API)
   api/v1/payments        Unified payment endpoint (idempotent, API-key auth)
   api/webhooks/*         PSP webhook handlers (normalized events)
-  (dashboard)/*          Authenticated dashboard (Clerk-gated)
+  dashboard/*            Authenticated dashboard at /dashboard (Clerk-gated)
 src/lib/
   orchestration/         Routing, failover, idempotency, orchestrator
   providers/             PSP adapters behind one interface

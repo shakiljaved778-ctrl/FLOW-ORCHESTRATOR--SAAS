@@ -39,7 +39,7 @@ npm run build
 | Auth (Clerk + scoped API keys) | `src/lib/auth/` |
 | Supabase clients + realtime | `src/lib/db/` |
 | API routes | `app/api/` |
-| Dashboard pages + server actions | `app/(dashboard)/`, `src/lib/dashboard/` |
+| Dashboard pages + server actions | `app/dashboard/`, `src/lib/dashboard/` |
 | SQL schema, RLS, RPC | `supabase/migrations/` |
 | Tests (unit + integration) | `tests/` |
 
